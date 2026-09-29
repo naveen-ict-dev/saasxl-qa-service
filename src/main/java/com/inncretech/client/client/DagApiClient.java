@@ -94,4 +94,52 @@ public class DagApiClient {
         .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
         .doOnError(err -> log.error("Failed to fetch runs for DAG {}", dagId, err));
   }
+
+  /**
+   * Calls POST /orchestration/api/v1/dags/{dagId}/nodes
+   */
+  public Mono<Map<?, ?>> createNode(Long dagId, Map<String, Object> body) {
+    return backendWebClient.post()
+        .uri("/orchestration/api/v1/dags/{dagId}/nodes", dagId)
+        .bodyValue(body)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to create node on DAG {}", dagId, err));
+  }
+
+  /**
+   * Calls POST /orchestration/api/v1/dags/{dagId}/runs. Body must be sent non-null (even {}) —
+   * DagController.createDagRun dereferences the raw @RequestBody(required=false) parameter
+   * unconditionally and NPEs if it's omitted (confirmed via backend source).
+   */
+  public Mono<Map<?, ?>> createRun(Long dagId, Map<String, Object> body) {
+    return backendWebClient.post()
+        .uri("/orchestration/api/v1/dags/{dagId}/runs", dagId)
+        .bodyValue(body)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to create run for DAG {}", dagId, err));
+  }
+
+  /**
+   * Calls GET /orchestration/api/v1/dags/{dagId}/runs/{runId}
+   */
+  public Mono<Map<?, ?>> getRunById(Long dagId, Object runId) {
+    return backendWebClient.get()
+        .uri("/orchestration/api/v1/dags/{dagId}/runs/{runId}", dagId, runId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch run {} for DAG {}", runId, dagId, err));
+  }
+
+  /**
+   * Calls GET /orchestration/api/v1/dags/{dagId}/snapshots
+   */
+  public Mono<Map<?, ?>> getSnapshots(Long dagId) {
+    return backendWebClient.get()
+        .uri("/orchestration/api/v1/dags/{dagId}/snapshots", dagId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch snapshots for DAG {}", dagId, err));
+  }
 }
