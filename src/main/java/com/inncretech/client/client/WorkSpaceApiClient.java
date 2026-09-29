@@ -46,13 +46,36 @@ public class WorkSpaceApiClient {
 
   /**
    * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables
+   * Backend returns a bare List<TableDTO>, not wrapped in SaasxlResponseDTO.
    */
-  public Mono<SaasxlResponseDTO<List<TableDTO>>> getTables(String workspaceId) {
+  public Mono<List<TableDTO>> getTables(String workspaceId) {
     return backendWebClient.get()
         .uri("/noCo/api/v2/workspaces/{workspaceId}/tables", workspaceId)
         .retrieve()
-        .bodyToMono(new ParameterizedTypeReference<SaasxlResponseDTO<List<TableDTO>>>() {})
+        .bodyToMono(new ParameterizedTypeReference<List<TableDTO>>() {})
         .doOnError(err -> log.error("Failed to fetch tables for workspace {}", workspaceId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/folder
+   */
+  public Mono<List<Map<?, ?>>> getFolders(String workspaceId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/folder", workspaceId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to fetch folders for workspace {}", workspaceId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/folder/externalTempToken
+   */
+  public Mono<Map<?, ?>> getFolderExternalTempToken(String workspaceId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/folder/externalTempToken", workspaceId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch folder temp token for workspace {}", workspaceId, err));
   }
 
   /**
