@@ -1,0 +1,10 @@
+Method,Route,Package,Controller.method,file:line,Action
+GET,/idp/api/v1/user,controller/idp,UserController.getCurrentUser,controller/idp/UserController.java:25,Get Current User Profile
+GET,/noCo/api/v2/workspaces,controller/noco,WorkSpaceController.getAllWorkSpaces,controller/noco/WorkSpaceController.java:189,List all workspaces
+GET,/noCo/api/v2/workspaces/{workspaceId},controller/noco,WorkSpaceController.getById,controller/noco/WorkSpaceController.java:176,Get workspace by ID
+GET,/noCo/api/v2/workspaces/{workspaceId}/tables,controller/noco,TableV2Controller.getTables,controller/noco/TableV2Controller.java:438,Get tables in workspace
+POST,/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/cursor,controller/noco,TableV2Controller.getCursorData,controller/noco/TableV2Controller.java:1285,Fetch table rows via cursor
+POST,/widget/api/v1/chart/abstract,widget,WidgetAbstractionController.getAbstractChart,widget/controller/WidgetAbstractionController.java:55,Abstract chart data
+GET,/alerts/api/v1/{alertId},alerts,AlertController.getById,alerts/controller/AlertController.java:64,Get alert by ID
+GET,/alerts/history/api/v1/company,alerts,AlertHistoryController.getCompanyAlertHistory,alerts/controller/AlertHistoryController.java:80,Get company alert history
+GET,/actuator/health,monitoring,Actuator.health,,Check health

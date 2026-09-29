@@ -1,0 +1,33 @@
+server:
+  port: 8085
+
+backend:
+  base-url: http://localhost:8989
+  auth:
+    email: ${BACKEND_USER_EMAIL:admin@example.com}
+    password: ${BACKEND_USER_PASSWORD:Password123!}
+    login-path: /idp/api/v1/user/v2/login
+    refresh-path: /idp/api/v1/user/v2/refresh
+    token-path: /idp/api/v1/user/token
+
+sheet:
+  # The Google Sheets URL (requires public access or export format)
+  google-sheet-url: https://docs.google.com/spreadsheets/d/12qElRJY2SSPpivc2ulK4zz9WCr1eWQGOBgukIq2rWx0/export?format=csv&gid=1684616346
+  # Local CSV path exported from the sheet or downloaded to ~/Downloads
+  local-csv-path: /Users/mickey/Downloads/Backend APIs Not Hit - MAIN-6624 - Untitled.csv
+  fallback-resource-csv: classpath:sample-endpoints.csv
+
+runner:
+  enabled: true
+  max-endpoints-to-test: 10
+
+webclient:
+  connect-timeout-ms: 10000
+  read-timeout-ms: 30000
+  max-in-memory-size-mb: 16
+
+logging:
+  level:
+    root: INFO
+    com.inncretech.client: DEBUG
+    org.springframework.web.reactive.function.client: DEBUG
