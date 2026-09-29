@@ -2,13 +2,17 @@ package com.inncretech.client.client;
 
 import com.inncretech.client.model.dto.QueryOptionDTO;
 import com.inncretech.client.model.dto.TableDTO;
+import com.inncretech.client.model.dto.WidgetParameterDTO;
 import com.inncretech.client.model.dto.WorkSpaceDTO;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -102,5 +106,81 @@ public class WorkSpaceApiClient {
         .retrieve()
         .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
         .doOnError(err -> log.error("Failed to fetch cursor data for table {}", tableId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/getRequestedWorkspaces
+   */
+  public Mono<List<Map<?, ?>>> getRequestedWorkspaces() {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/getRequestedWorkspaces")
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to fetch requested workspaces", err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/getAllPublicWorkspaces
+   */
+  public Mono<List<Map<?, ?>>> getAllPublicWorkspaces() {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/getAllPublicWorkspaces")
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to fetch public workspaces", err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/invitedWorkspaces
+   */
+  public Mono<List<Map<?, ?>>> getInvitedWorkspaces() {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/invitedWorkspaces")
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to fetch invited workspaces", err));
+  }
+
+  /**
+   * Calls POST /noCo/api/v2/workspaces/{workspaceId}/parameters
+   */
+  public Mono<WidgetParameterDTO> createWidgetParameter(String workspaceId, WidgetParameterDTO parameter) {
+    return backendWebClient.post()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/parameters", workspaceId)
+        .bodyValue(parameter)
+        .retrieve()
+        .bodyToMono(WidgetParameterDTO.class)
+        .doOnError(err -> log.error("Failed to create widget parameter for workspace {}", workspaceId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/parameters
+   */
+  public Mono<Map<?, ?>> getWidgetParameters(String workspaceId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/parameters", workspaceId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch widget parameters for workspace {}", workspaceId, err));
+  }
+
+  /**
+   * Calls POST /noCo/api/v2/workspaces/{workspaceId}/folder/upload
+   */
+  public Mono<List<Map<?, ?>>> uploadWorkspaceFile(String workspaceId, byte[] content, String filename) {
+    MultipartBodyBuilder builder = new MultipartBodyBuilder();
+    builder.part("files", new ByteArrayResource(content) {
+      @Override
+      public String getFilename() {
+        return filename;
+      }
+    });
+
+    return backendWebClient.post()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/folder/upload", workspaceId)
+        .body(BodyInserters.fromMultipartData(builder.build()))
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to upload workspace file for workspace {}", workspaceId, err));
   }
 }

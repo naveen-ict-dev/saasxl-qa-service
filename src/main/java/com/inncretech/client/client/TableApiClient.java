@@ -3,6 +3,8 @@ package com.inncretech.client.client;
 import com.inncretech.client.model.dto.ColumnDTO;
 import com.inncretech.client.model.dto.NoCoQueryDTO;
 import com.inncretech.client.model.dto.QueryOptionDTO;
+import com.inncretech.client.model.dto.RearrangePositionDTO;
+import com.inncretech.client.model.dto.RowDataDTO;
 import com.inncretech.client.model.dto.TableDTO;
 import com.inncretech.client.model.dto.WorkbookActionDTO;
 import java.util.List;
@@ -139,5 +141,66 @@ public class TableApiClient {
         .retrieve()
         .bodyToMono(new ParameterizedTypeReference<List<WorkbookActionDTO>>() {})
         .doOnError(err -> log.error("Failed to fetch actions for table {}", tableId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/columnCatalog
+   */
+  public Mono<Map<?, ?>> getColumnCatalog(String workspaceId, String tableId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/columnCatalog", workspaceId, tableId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch column catalog for table {}", tableId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/columns/{columnId}
+   */
+  public Mono<ColumnDTO> getColumn(String workspaceId, String tableId, String columnId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/columns/{columnId}",
+            workspaceId, tableId, columnId)
+        .retrieve()
+        .bodyToMono(ColumnDTO.class)
+        .doOnError(err -> log.error("Failed to fetch column {} on table {}", columnId, tableId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/columns/{columnId}/values/search
+   */
+  public Mono<List<Map<?, ?>>> searchColumnValues(
+      String workspaceId, String tableId, String columnId, String query) {
+    return backendWebClient.get()
+        .uri(uriBuilder -> uriBuilder
+            .path("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/columns/{columnId}/values/search")
+            .queryParam("query", query)
+            .build(workspaceId, tableId, columnId))
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to search values for column {}", columnId, err));
+  }
+
+  /**
+   * Calls POST /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/refreshCache
+   */
+  public Mono<Void> refreshCache(String workspaceId, String tableId) {
+    return backendWebClient.post()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/refreshCache", workspaceId, tableId)
+        .retrieve()
+        .bodyToMono(Void.class)
+        .doOnError(err -> log.error("Failed to refresh cache for table {}", tableId, err));
+  }
+
+  /**
+   * Calls POST /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/rearrangePosition
+   */
+  public Mono<RowDataDTO> rearrangePosition(String workspaceId, String tableId, RearrangePositionDTO body) {
+    return backendWebClient.post()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/rearrangePosition", workspaceId, tableId)
+        .bodyValue(body)
+        .retrieve()
+        .bodyToMono(RowDataDTO.class)
+        .doOnError(err -> log.error("Failed to rearrange position on table {}", tableId, err));
   }
 }
