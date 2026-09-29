@@ -37,4 +37,29 @@ public class DataSourceApiClient {
         .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
         .doOnError(err -> log.error("Failed to fetch datasources", err));
   }
+
+  /**
+   * Calls GET /dataSources/api/v1/{dataSourceId}/getSyncSchemaStatus. Response is
+   * {"status": "RUNNING"|"COMPLETED"|"FAILED"|"NOT_AVAILABLE"} — reads the latest async
+   * schema-sync job's outcome, since a 200 from addDatasource only proves the synchronous
+   * connection check passed, not that table discovery finished.
+   */
+  public Mono<Map<?, ?>> getSyncSchemaStatus(Object dataSourceId) {
+    return backendWebClient.get()
+        .uri("/dataSources/api/v1/{dataSourceId}/getSyncSchemaStatus", dataSourceId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch sync schema status for datasource {}", dataSourceId, err));
+  }
+
+  /**
+   * Calls GET /dataSources/api/v1/dataSources/{dataSourceId}/tables
+   */
+  public Mono<Map<?, ?>> getDataSourceTables(Object dataSourceId) {
+    return backendWebClient.get()
+        .uri("/dataSources/api/v1/dataSources/{dataSourceId}/tables", dataSourceId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch tables for datasource {}", dataSourceId, err));
+  }
 }

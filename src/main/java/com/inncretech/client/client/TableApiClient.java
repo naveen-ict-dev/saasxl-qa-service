@@ -4,6 +4,8 @@ import com.inncretech.client.model.dto.ColumnDTO;
 import com.inncretech.client.model.dto.NoCoQueryDTO;
 import com.inncretech.client.model.dto.QueryOptionDTO;
 import com.inncretech.client.model.dto.TableDTO;
+import com.inncretech.client.model.dto.WorkbookActionDTO;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -78,5 +80,64 @@ public class TableApiClient {
         .retrieve()
         .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
         .doOnError(err -> log.error("Failed to execute query on table {}", tableId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/{columnId}/linkData
+   */
+  public Mono<List<Map<?, ?>>> getLinkData(String workspaceId, String tableId, String columnId, Object rowId) {
+    return backendWebClient.get()
+        .uri(uriBuilder -> uriBuilder
+            .path("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/{columnId}/linkData")
+            .queryParam("id", rowId)
+            .build(workspaceId, tableId, columnId))
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to fetch link data for column {}", columnId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/linkTables
+   */
+  public Mono<List<TableDTO>> getLinkTables(String workspaceId, String tableId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/linkTables", workspaceId, tableId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<TableDTO>>() {})
+        .doOnError(err -> log.error("Failed to fetch link tables for table {}", tableId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/enrichments
+   */
+  public Mono<Map<?, ?>> getEnrichments(String workspaceId, String tableId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/enrichments", workspaceId, tableId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<Map<?, ?>>() {})
+        .doOnError(err -> log.error("Failed to fetch enrichments for table {}", tableId, err));
+  }
+
+  /**
+   * Calls POST /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/actions
+   */
+  public Mono<WorkbookActionDTO> createAction(String workspaceId, String tableId, WorkbookActionDTO action) {
+    return backendWebClient.post()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/actions", workspaceId, tableId)
+        .bodyValue(action)
+        .retrieve()
+        .bodyToMono(WorkbookActionDTO.class)
+        .doOnError(err -> log.error("Failed to create action on table {}", tableId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/actions
+   */
+  public Mono<List<WorkbookActionDTO>> getActions(String workspaceId, String tableId) {
+    return backendWebClient.get()
+        .uri("/noCo/api/v2/workspaces/{workspaceId}/tables/{tableId}/actions", workspaceId, tableId)
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<WorkbookActionDTO>>() {})
+        .doOnError(err -> log.error("Failed to fetch actions for table {}", tableId, err));
   }
 }

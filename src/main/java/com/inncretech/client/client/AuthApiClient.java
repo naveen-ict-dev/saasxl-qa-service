@@ -1,6 +1,8 @@
 package com.inncretech.client.client;
 
+import com.inncretech.client.model.dto.AuthResponseDTO;
 import com.inncretech.client.model.dto.LoginRequestDTO;
+import com.inncretech.client.model.dto.RefreshTokenRequestDTO;
 import com.inncretech.client.model.dto.SignUpRequestDTO;
 import com.inncretech.client.model.dto.UserDTO;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,9 @@ public class AuthApiClient {
 
   @Value("${backend.auth.login-path-v1:/idp/api/v1/user/login}")
   private String loginPathV1;
+
+  @Value("${backend.auth.login-path:/idp/api/v1/user/v2/login}")
+  private String loginPathV2;
 
   /**
    * Calls POST /idp/api/v1/user/login (permitAll — no Bearer token attached, per
@@ -57,6 +62,31 @@ public class AuthApiClient {
           return authHeader.substring(BEARER_PREFIX.length());
         })
         .doOnError(err -> log.error("Login failed for {}", request.getEmail(), err));
+  }
+
+  /**
+   * Calls POST /idp/api/v1/user/v2/login (permitAll), returning both an access and refresh token
+   * in the JSON body — unlike the v1 login this suite's bootstrap uses.
+   */
+  public Mono<AuthResponseDTO> loginV2(LoginRequestDTO request) {
+    return backendWebClient.post()
+        .uri(loginPathV2)
+        .bodyValue(request)
+        .retrieve()
+        .bodyToMono(AuthResponseDTO.class)
+        .doOnError(err -> log.error("v2 login failed for {}", request.getEmail(), err));
+  }
+
+  /**
+   * Calls POST /idp/api/v1/user/v2/refresh (permitAll) to rotate an access/refresh token pair.
+   */
+  public Mono<AuthResponseDTO> refreshToken(RefreshTokenRequestDTO request) {
+    return backendWebClient.post()
+        .uri("/idp/api/v1/user/v2/refresh")
+        .bodyValue(request)
+        .retrieve()
+        .bodyToMono(AuthResponseDTO.class)
+        .doOnError(err -> log.error("Token refresh failed", err));
   }
 
   /**

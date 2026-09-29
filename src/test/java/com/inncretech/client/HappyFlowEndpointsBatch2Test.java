@@ -1,5 +1,7 @@
 package com.inncretech.client;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,7 +20,9 @@ import com.inncretech.client.model.dto.ConfigPropertyDTO;
 import com.inncretech.client.model.dto.PreferenceDTO;
 import com.inncretech.client.model.dto.TableDTO;
 import com.inncretech.client.model.dto.UserDTO;
+import com.inncretech.client.util.TestRetry;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -194,12 +198,17 @@ class HappyFlowEndpointsBatch2Test extends AbstractHappyFlowTest {
   void addDatasource_returnsCreatedDatasource() {
     // DataSourceDTO.type is DataSourceType {SQL, REST, NO_SQL, WAREHOUSE}; username/password are
     // top-level DataSourceDTO fields (not nested under "properties"), and "dataSourceProvider" in
-    // properties is the key the backend reads to pick the JDBC dialect. Points at this
-    // environment's own dev Postgres (application-dev.properties) rather than a guessed target,
-    // since that's the one instance guaranteed reachable from wherever the backend is running.
+    // properties is the key the backend reads to pick the JDBC dialect. driverName is required
+    // top-level too: it feeds spark.sql.catalog.<name>.driver for the async Kyuubi schema-sync
+    // job with no fallback anywhere in the backend — omitting it lets the synchronous create
+    // still return 200 (JDBC's DriverManager auto-discovers the driver for the connection-test)
+    // while schema sync silently fails in the background. Points at this environment's own dev
+    // Postgres (application-dev.properties) rather than a guessed target, since that's the one
+    // instance guaranteed reachable from wherever the backend is running.
     Map<?, ?> created = dataSourceApiClient.addDatasource(Map.of(
         "name", "happyflow_" + UUID.randomUUID().toString().replace("-", ""),
         "type", "SQL",
+        "driverName", "org.postgresql.Driver",
         "username", "postgres",
         "password", "Demo12#$",
         "properties", Map.of(
@@ -208,5 +217,22 @@ class HappyFlowEndpointsBatch2Test extends AbstractHappyFlowTest {
             "port", "5432",
             "dbName", "saasxl"))).block();
     assertNotNull(created);
+    Object dataSourceId = created.get("id");
+    assertNotNull(dataSourceId, "create response missing id");
+
+    // A 200 here only proves the synchronous connection check passed — table discovery runs
+    // async afterward. Poll the real sync-status endpoint instead of trusting the create
+    // response, since that's exactly the gap that let the missing driverName go unnoticed before.
+    TestRetry.untilSucceeds(Duration.ofMinutes(2), Duration.ofSeconds(5), () -> {
+      Map<?, ?> status = dataSourceApiClient.getSyncSchemaStatus(dataSourceId).block();
+      assertNotNull(status);
+      assertEquals("COMPLETED", status.get("status"));
+    });
+
+    Map<?, ?> tablesPage = dataSourceApiClient.getDataSourceTables(dataSourceId).block();
+    assertNotNull(tablesPage);
+    List<?> tables = (List<?>) tablesPage.get("results");
+    assertNotNull(tables);
+    assertFalse(tables.isEmpty(), "schema sync completed but found no tables");
   }
 }

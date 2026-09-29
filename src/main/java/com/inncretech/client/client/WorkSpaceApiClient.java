@@ -1,7 +1,6 @@
 package com.inncretech.client.client;
 
 import com.inncretech.client.model.dto.QueryOptionDTO;
-import com.inncretech.client.model.dto.SaasxlResponseDTO;
 import com.inncretech.client.model.dto.TableDTO;
 import com.inncretech.client.model.dto.WorkSpaceDTO;
 import java.util.List;
@@ -35,13 +34,28 @@ public class WorkSpaceApiClient {
 
   /**
    * Calls GET /noCo/api/v2/workspaces/{workspaceId}
+   * Backend returns a bare BaseWorkSpaceDTO, not wrapped in SaasxlResponseDTO.
    */
-  public Mono<SaasxlResponseDTO<WorkSpaceDTO>> getWorkspaceById(String workspaceId) {
+  public Mono<WorkSpaceDTO> getWorkspaceById(String workspaceId) {
     return backendWebClient.get()
         .uri("/noCo/api/v2/workspaces/{workspaceId}", workspaceId)
         .retrieve()
-        .bodyToMono(new ParameterizedTypeReference<SaasxlResponseDTO<WorkSpaceDTO>>() {})
+        .bodyToMono(WorkSpaceDTO.class)
         .doOnError(err -> log.error("Failed to fetch workspace {}", workspaceId, err));
+  }
+
+  /**
+   * Calls GET /noCo/api/v2/workspaces/search
+   */
+  public Mono<List<Map<?, ?>>> search(String query) {
+    return backendWebClient.get()
+        .uri(uriBuilder -> uriBuilder
+            .path("/noCo/api/v2/workspaces/search")
+            .queryParam("query", query)
+            .build())
+        .retrieve()
+        .bodyToMono(new ParameterizedTypeReference<List<Map<?, ?>>>() {})
+        .doOnError(err -> log.error("Failed to search workspaces for {}", query, err));
   }
 
   /**
